@@ -39,7 +39,7 @@ const createFixture = async (context, options = {}) => {
   const instructions = Object.hasOwn(options, 'instructions')
     ? options.instructions
     : defaultInstructions;
-  const root = await mkdtemp(path.join(tmpdir(), 'agent-composition-template-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'agent-composition-fixture-'));
   context.after(async () => rm(root, { recursive: true, force: true }));
   await writeFile(path.join(root, 'agent.yaml'), source, 'utf8');
 
@@ -202,7 +202,7 @@ test('the real published first-party Registry loads through its public API', asy
   assert.equal(reader.getCapability('git-optimizer')?.version.value, '0.1.0');
 });
 
-test('the real two-capability Agent Kit build resolves profiles and bindings', async () => {
+test('the canonical Agent Kit build resolves supported profiles and bindings', async () => {
   const { first } = await getRepeatedBuilds();
 
   assert.deepEqual(
@@ -220,8 +220,32 @@ test('the real two-capability Agent Kit build resolves profiles and bindings', a
         binding: 'local-stdio',
       },
       {
+        id: 'data-cruncher',
+        version: '0.0.0-development',
+        profile: 'local-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'doc-rag',
+        version: '0.0.0-development',
+        profile: 'local-filesystem-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'document-optimizer',
+        version: '0.0.0-development',
+        profile: 'local-filesystem-package',
+        binding: 'local-stdio',
+      },
+      {
         id: 'git-optimizer',
         version: '0.1.0',
+        profile: 'local-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'vision',
+        version: '0.0.0-development',
         profile: 'local-package',
         binding: 'local-stdio',
       },
@@ -236,7 +260,7 @@ test('agent.lock is byte-identical across repeated builds', async () => {
 
 test('the VS Code agent file is byte-identical across repeated builds', async () => {
   const { first, second } = await getRepeatedBuilds();
-  const generatedPath = '.github/agents/repository-context.agent.md';
+  const generatedPath = '.github/agents/developer-optimization.agent.md';
   assert.equal(adapterContent(first, generatedPath), adapterContent(second, generatedPath));
 });
 

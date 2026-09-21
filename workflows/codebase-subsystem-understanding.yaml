@@ -1,0 +1,22 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: codebase-subsystem-understanding
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Explain a codebase or subsystem while minimizing unrelated source loading.
+preferredProgression:
+  - capability: ast-summarizer
+    purpose: Establish declarations, signatures, entry points, and dependency orientation.
+  - capability: git-optimizer
+    purpose: Add bounded change or history context when it explains the current structure.
+  - capability: doc-rag
+    purpose: Retrieve architecture, design, or API context relevant to the subsystem.
+fallback:
+  condition: Structure and documentation do not establish control flow or behavior.
+  action: Read targeted implementation files along the unresolved path.
+evidenceExpectations:
+  - Name the relevant entry points and dependency path.
+  - Separate documented intent from observed implementation.
+  - Identify missing or conflicting evidence.
+stoppingCondition: The requested boundary and behavior are explained with a traceable evidence chain.
+mutationBoundary: Understanding is read-only; any implementation change requires a separate request.

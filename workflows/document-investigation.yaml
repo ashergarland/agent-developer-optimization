@@ -1,0 +1,20 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: document-investigation
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Answer questions about PDF or DOCX content with progressive fidelity and provenance.
+preferredProgression:
+  - capability: document-optimizer
+    purpose: Obtain outlines, sections, tables, figures, and compact document representations.
+  - capability: doc-rag
+    purpose: Retrieve related corpus evidence when the question crosses documents.
+fallback:
+  condition: Formatting, exact wording, or omitted content is material to the answer.
+  action: Read the targeted raw document section or native page content.
+evidenceExpectations:
+  - Preserve document identity and page, section, table, or figure references.
+  - Distinguish extracted text from interpretation.
+  - Report unsupported or unreadable content.
+stoppingCondition: The answer is supported by cited document regions at sufficient fidelity.
+mutationBoundary: Do not alter source documents; optimized artifacts remain capability-scoped.

@@ -8,10 +8,42 @@
       "command": "npx",
       "type": "stdio"
     },
+    "data-cruncher": {
+      "args": [
+        "--offline",
+        "agent-tool-server-data-cruncher@0.0.0-development"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "doc-rag": {
+      "args": [
+        "--offline",
+        "agent-tool-server-doc-rag@0.0.0-development"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "document-optimizer": {
+      "args": [
+        "--offline",
+        "agent-tool-server-document-optimizer@0.0.0-development"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
     "git-optimizer": {
       "args": [
         "--offline",
         "agent-tool-server-git-optimizer@0.1.0"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "vision": {
+      "args": [
+        "--offline",
+        "agent-tool-server-vision@0.0.0-development"
       ],
       "command": "npx",
       "type": "stdio"

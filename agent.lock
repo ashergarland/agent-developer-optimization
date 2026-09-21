@@ -1,7 +1,7 @@
 {
   "agent": {
-    "definitionDigest": "sha256:3cb3351a810c328fbd0947324ce1a6e83f8d7d0fe2c5bf99490bea3dccb44441",
-    "id": "repository-context",
+    "definitionDigest": "sha256:6c61429233fb365cfc68af67d27dc5e7b2ca49b1fcb569eabbe9d0c77d36493f",
+    "id": "developer-optimization",
     "version": "1.0.0"
   },
   "build": {
@@ -68,6 +68,154 @@
       "artifact": {
         "availability": "declared",
         "id": "npm-package",
+        "identifier": "agent-tool-server-data-cruncher",
+        "kind": "npm",
+        "reference": "server.json#/packages/0",
+        "sourceRevision": "67bc95dd4ba9d2b8ae829650d470a055819121f1",
+        "version": "0.0.0-development"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "data-cruncher",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "read-only",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-package",
+        "source": "capability-profile-declaration"
+      },
+      "registryEntryDigest": "sha256:34e27bf60300118f723c4390b6fafb6fa83f005e0fdebef32bdf49d1f59d2149",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "filesystem-read",
+          "process-execute"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": "capability-profiles.json",
+        "repository": "https://github.com/ashergarland/agent-tool-server-data-cruncher",
+        "revision": "67bc95dd4ba9d2b8ae829650d470a055819121f1"
+      },
+      "version": "0.0.0-development"
+    },
+    {
+      "artifact": {
+        "availability": "declared",
+        "id": "npm-package",
+        "identifier": "agent-tool-server-doc-rag",
+        "kind": "npm",
+        "reference": "server.json#/packages/0",
+        "sourceRevision": "b4ead6e48d00c14b59089e7169cb03ac6f57b181",
+        "version": "0.0.0-development"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "doc-rag",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "read-only",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-filesystem-package",
+        "source": "capability-profile-declaration"
+      },
+      "registryEntryDigest": "sha256:f42aa766346830ecb8f68f9aed8de2dc71a3c7d5f8ba2addc906f7dd5faf71ed",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "filesystem-read"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": "capability-profiles.json",
+        "repository": "https://github.com/ashergarland/agent-tool-server-doc-rag",
+        "revision": "b4ead6e48d00c14b59089e7169cb03ac6f57b181"
+      },
+      "version": "0.0.0-development"
+    },
+    {
+      "artifact": {
+        "availability": "declared",
+        "id": "npm-package",
+        "identifier": "agent-tool-server-document-optimizer",
+        "kind": "npm",
+        "reference": "server.json#/packages/0",
+        "sourceRevision": "35223be62972093a1b5180b3b0672654f90fb5ad",
+        "version": "0.0.0-development"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "document-optimizer",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "read-only",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-filesystem-package",
+        "source": "capability-profile-declaration"
+      },
+      "registryEntryDigest": "sha256:cdb443bf6127577252f2cc32636cd13bef34d256f0c4371e801f8499bb6135e3",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "filesystem-read"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": "capability-profiles.json",
+        "repository": "https://github.com/ashergarland/agent-tool-server-document-optimizer",
+        "revision": "35223be62972093a1b5180b3b0672654f90fb5ad"
+      },
+      "version": "0.0.0-development"
+    },
+    {
+      "artifact": {
+        "availability": "declared",
+        "id": "npm-package",
         "identifier": "agent-tool-server-git-optimizer",
         "kind": "npm",
         "reference": "server.json#/packages/0",
@@ -113,6 +261,57 @@
         "revision": "6fe83371af641fdbaea1e22c0c8bf981caa882ab"
       },
       "version": "0.1.0"
+    },
+    {
+      "artifact": {
+        "availability": "declared",
+        "id": "npm-package",
+        "identifier": "agent-tool-server-vision",
+        "kind": "npm",
+        "reference": "server.json#/packages/0",
+        "sourceRevision": "833d97c76d92ca833650d826fb1348090df1d5a8",
+        "version": "0.0.0-development"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "vision",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "mutating",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-package",
+        "source": "capability-profile-declaration"
+      },
+      "registryEntryDigest": "sha256:f22cc5caa172e302f75e1cd5afb24d1ed49d1eacb65694d15094cde7a2bee9d8",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "artifact-write",
+          "filesystem-read",
+          "process-execute"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": "capability-profiles.json",
+        "repository": "https://github.com/ashergarland/agent-tool-server-vision",
+        "revision": "833d97c76d92ca833650d826fb1348090df1d5a8"
+      },
+      "version": "0.0.0-development"
     }
   ],
   "kind": "agent-lock",
