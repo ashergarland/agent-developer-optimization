@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "ast-summarizer": {
+      "args": [
+        "-y",
+        "@agent-tool-platform/ast-summarizer@0.1.1"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "git-optimizer": {
+      "args": [
+        "--offline",
+        "agent-tool-server-git-optimizer@0.1.0"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    }
+  }
+}

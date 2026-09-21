@@ -1,0 +1,21 @@
+{
+  "name": "agent-composition-template",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reusable canonical agent composition template for Agent Tool Platform.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "agent:build": "node scripts/build-agent.mjs",
+    "agent:check": "node scripts/build-agent.mjs --check",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@agent-tool-platform/agent-kit": "0.2.0",
+    "@agent-tool-platform/capability-registry": "0.2.0",
+    "yaml": "2.9.1"
+  }
+}

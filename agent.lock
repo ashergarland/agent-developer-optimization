@@ -1,0 +1,120 @@
+{
+  "agent": {
+    "definitionDigest": "sha256:3cb3351a810c328fbd0947324ce1a6e83f8d7d0fe2c5bf99490bea3dccb44441",
+    "id": "repository-context",
+    "version": "1.0.0"
+  },
+  "build": {
+    "adapters": [
+      {
+        "id": "vscode",
+        "schemaVersion": 1
+      }
+    ],
+    "registrySchemaVersion": "1.0.0",
+    "schemaVersion": 1
+  },
+  "capabilities": [
+    {
+      "artifact": {
+        "availability": "published",
+        "id": "npm-package",
+        "identifier": "@agent-tool-platform/ast-summarizer",
+        "kind": "npm",
+        "reference": "v0.1.1",
+        "sourceRevision": "93bffa78d3fbbb4d835a8da55f33af68e48ec8cd",
+        "version": "0.1.1"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "ast-summarizer",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "read-only",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-package",
+        "source": "registry-curated"
+      },
+      "registryEntryDigest": "sha256:5b6107fa92e2f49844ca144725f08fb45554c0c8d01bf765c58bc8bfed8be523",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "workspace-read"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": null,
+        "repository": "https://github.com/ashergarland/agent-tool-server-ast-summarizer",
+        "revision": "93bffa78d3fbbb4d835a8da55f33af68e48ec8cd"
+      },
+      "version": "0.1.1"
+    },
+    {
+      "artifact": {
+        "availability": "declared",
+        "id": "npm-package",
+        "identifier": "agent-tool-server-git-optimizer",
+        "kind": "npm",
+        "reference": "server.json#/packages/0",
+        "sourceRevision": "6fe83371af641fdbaea1e22c0c8bf981caa882ab",
+        "version": "0.1.0"
+      },
+      "binding": {
+        "id": "local-stdio",
+        "interface": "stdio",
+        "mode": "local"
+      },
+      "id": "git-optimizer",
+      "profile": {
+        "dimensions": {
+          "access": "local-process",
+          "delivery": "package",
+          "execution": "local",
+          "mutation": "read-only",
+          "provider": "none",
+          "workload": "filesystem"
+        },
+        "id": "local-package",
+        "source": "capability-profile-declaration"
+      },
+      "registryEntryDigest": "sha256:18ce753d7a4e70f39f4bea958d7d684cd8ba31c3326b6d538eb21f9e2bf82b7b",
+      "requestedVersion": null,
+      "requirements": {
+        "permissions": [
+          "process-execute",
+          "repository-read"
+        ],
+        "providerPrerequisiteIds": [],
+        "readinessSignals": [
+          "process",
+          "workload"
+        ],
+        "requiredSecretNames": [],
+        "setupRequired": true
+      },
+      "source": {
+        "profileDeclaration": "capability-profiles.json",
+        "repository": "https://github.com/ashergarland/agent-tool-server-git-optimizer",
+        "revision": "6fe83371af641fdbaea1e22c0c8bf981caa882ab"
+      },
+      "version": "0.1.0"
+    }
+  ],
+  "kind": "agent-lock",
+  "schemaVersion": 1
+}

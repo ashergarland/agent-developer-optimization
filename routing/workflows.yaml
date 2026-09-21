@@ -1,0 +1,2 @@
+# Agent-owned routing source reserved for a concrete agent.
+# The M5.5 composition build does not consume this file or implement routing behavior.

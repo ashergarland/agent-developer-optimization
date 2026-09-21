@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Run focused tests
+        run: npm test
+
+      - name: Check generated outputs
+        run: npm run agent:check
+
+      - name: Rebuild generated outputs
+        run: npm run agent:build
+
+      - name: Prove generated outputs are checked in
+        run: git diff --exit-code -- agent.lock .github/agents .vscode/mcp.json
+
+      - name: Check whitespace
+        run: git diff --check
