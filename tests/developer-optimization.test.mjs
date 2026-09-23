@@ -5,13 +5,15 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import {
-  AgentKitError,
+  AGENT_LOCK_SCHEMA_VERSION,
+  VSCODE_ADAPTER_SCHEMA_VERSION,
   buildVsCodeAgent,
   createReadinessPlan,
   resolveAgentDefinition,
   vscodeHostAdapter,
 } from '@agent-tool-platform/agent-kit';
 import {
+  capabilityRegistrySchemaVersion,
   createCapabilityRegistryReader,
   loadFirstPartyCapabilityRegistry,
 } from '@agent-tool-platform/capability-registry';
@@ -20,7 +22,8 @@ import { parse } from 'yaml';
 import { loadAgentDefinition } from '../scripts/build-agent.mjs';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const registry = createCapabilityRegistryReader(await loadFirstPartyCapabilityRegistry());
+const registryDocument = await loadFirstPartyCapabilityRegistry();
+const registry = createCapabilityRegistryReader(registryDocument);
 
 const intendedCapabilityIds = [
   'ast-summarizer',
@@ -31,7 +34,7 @@ const intendedCapabilityIds = [
   'git-optimizer',
   'vision',
 ];
-const canonicalCapabilityIds = intendedCapabilityIds.filter((id) => id !== 'azure');
+const stageCCapabilityIds = intendedCapabilityIds.filter((id) => id !== 'azure');
 
 const stageCapabilityIds = {
   A: ['ast-summarizer', 'git-optimizer', 'data-cruncher'],
@@ -61,7 +64,11 @@ const stageDefinition = (stage) => ({
   name: `Developer Optimization Stage ${stage}`,
   version: '1.0.0',
   instructions: 'Prefer compact, evidence-backed capability output before raw context.',
-  capabilities: stageCapabilityIds[stage].map((id) => ({ id })),
+  capabilities: stageCapabilityIds[stage].map((id) => ({
+    id,
+    ...(id === 'vision' ? { profile: 'local-package' } : {}),
+    ...(id === 'azure' ? { profile: 'hosted-read-only' } : {}),
+  })),
 });
 
 const stageCache = new Map();
@@ -179,11 +186,15 @@ test('canonical identity and top-level instructions describe the real agent', as
   assert.match(definition.version, /^\d+\.\d+\.\d+$/u);
   assert.deepEqual(
     definition.capabilities.map((capability) => capability.id),
-    canonicalCapabilityIds,
+    intendedCapabilityIds,
   );
   assert.deepEqual(
     definition.capabilities.find((capability) => capability.id === 'vision'),
     { id: 'vision', profile: 'local-package' },
+  );
+  assert.deepEqual(
+    definition.capabilities.find((capability) => capability.id === 'azure'),
+    { id: 'azure', profile: 'hosted-read-only' },
   );
   assert.ok(definition.instructions.length > 2_000);
   assert.match(definition.instructions, /smallest sufficient capability sequence/u);
@@ -192,7 +203,9 @@ test('canonical identity and top-level instructions describe the real agent', as
   assert.doesNotMatch(definition.instructions, /Use the available read-only repository capabilities/u);
 });
 
-test('Registry 0.2.0 resolves every intended capability with inspected metadata', () => {
+test('Registry 0.3.0 exposes schema 1.1.0 and every intended capability', () => {
+  assert.equal(capabilityRegistrySchemaVersion, '1.1.0');
+  assert.equal(registryDocument.schemaVersion, '1.1.0');
   assert.deepEqual(
     registry.listCapabilities().map((capability) => capability.id),
     intendedCapabilityIds,
@@ -236,6 +249,25 @@ test('Registry 0.2.0 resolves every intended capability with inspected metadata'
       assert.ok(profile.readiness.signals.length > 0);
     }
   }
+
+  const azure = registry.getCapability('azure');
+  const binding = azure?.bindings.find(
+    (candidate) => candidate.id === 'hosted-read-only-http',
+  );
+  assert.deepEqual(binding?.client, {
+    http: {
+      headers: [
+        {
+          name: 'x-api-key',
+          value: {
+            source: 'configuration',
+            name: 'connector-api-key',
+            prefix: '',
+          },
+        },
+      ],
+    },
+  });
 });
 
 test('Stage A composes AST, Git, and Data through compatible local bindings', async () => {
@@ -338,7 +370,7 @@ test('Stage C adds local Vision and Document Optimizer and builds successfully',
   const build = await buildVsCodeAgent(definition, { registry });
   const summary = resolvedSummary(resolution);
 
-  assert.deepEqual(summary.map((capability) => capability.id), canonicalCapabilityIds);
+  assert.deepEqual(summary.map((capability) => capability.id), stageCCapabilityIds);
   assert.ok(summary.every((capability) => capability.status === 'resolved'));
   assert.ok(summary.every((capability) => capability.compatibility === 'compatible'));
   assert.deepEqual(
@@ -357,37 +389,45 @@ test('Stage C adds local Vision and Document Optimizer and builds successfully',
 
   const mcp = adapterMcp(build);
   assert.equal(mcp.inputs, undefined);
-  assert.deepEqual(Object.keys(mcp.servers), canonicalCapabilityIds);
+  assert.deepEqual(Object.keys(mcp.servers), stageCCapabilityIds);
   assert.deepEqual(mcp.servers['ast-summarizer'].args, [
     '-y',
     '@agent-tool-platform/ast-summarizer@0.1.1',
   ]);
-  for (const id of canonicalCapabilityIds.filter((capability) => capability !== 'ast-summarizer')) {
+  for (const id of stageCCapabilityIds.filter((capability) => capability !== 'ast-summarizer')) {
     assert.equal(mcp.servers[id].args[0], '--offline');
   }
 });
 
-test('Stage D proves the Azure authenticated HTTP Platform incompatibility', async () => {
+test('Stage D composes Azure through the authenticated read-only HTTP binding', async () => {
   const { definition, resolution, readiness } = await getStage('D');
+  const build = await buildVsCodeAgent(definition, { registry });
   const azure = resolution.capabilities.find(
     (capability) => capability.capability.id === 'azure',
   );
   assert.ok(azure);
-  assert.equal(azure.status, 'incompatible');
+  assert.equal(azure.status, 'resolved');
   assert.equal(azure.profile.id, 'hosted-read-only');
-  assert.equal(azure.registryBinding.id, 'hosted-read-only-http');
-  assert.equal(azure.artifact.availability, 'declared');
+  assert.equal(azure.binding.id, 'hosted-read-only-http');
+  assert.equal(azure.binding.artifact.availability, 'declared');
   assert.deepEqual(azure.compatibility, {
-    state: 'incompatible',
-    reasons: [
-      'authenticated HTTP bindings require a registry-defined client header mapping that is not available',
+    state: 'compatible',
+    reasons: [],
+  });
+  assert.deepEqual(azure.binding.httpClient, {
+    headers: [
+      {
+        name: 'x-api-key',
+        configurationName: 'connector-api-key',
+        prefix: '',
+      },
     ],
   });
 
   const azureReadiness = readiness.capabilities.find((capability) => capability.id === 'azure');
   assert.ok(azureReadiness);
   assert.equal(azureReadiness.bindingMode, 'remote');
-  assert.equal(azureReadiness.state, 'incompatible-binding');
+  assert.equal(azureReadiness.state, 'missing-configuration');
   assert.ok(
     azureReadiness.requirements.some(
       (requirement) =>
@@ -396,15 +436,81 @@ test('Stage D proves the Azure authenticated HTTP Platform incompatibility', asy
         requirement.state === 'missing',
     ),
   );
+  assert.ok(
+    azureReadiness.requirements.some(
+      (requirement) =>
+        requirement.kind === 'remote-connection' && requirement.state === 'setup-required',
+    ),
+  );
+  assert.ok(
+    azureReadiness.requirements.some(
+      (requirement) =>
+        requirement.kind === 'provider-prerequisite' &&
+        requirement.id === 'azure-provider-registrations' &&
+        requirement.state === 'setup-required',
+    ),
+  );
+  assert.ok(
+    azureReadiness.requirements.some(
+      (requirement) =>
+        requirement.kind === 'provider-prerequisite' &&
+        requirement.id === 'azure-resource-manager' &&
+        requirement.state === 'setup-required',
+    ),
+  );
 
-  await assert.rejects(
-    buildVsCodeAgent(definition, { registry }),
-    (error) =>
-      error instanceof AgentKitError &&
-      error.code === 'INCOMPATIBLE_BINDING' &&
-      error.issues.length === 1 &&
-      error.issues[0] ===
-        'azure@0.2.0/hosted-read-only: authenticated HTTP bindings require a registry-defined client header mapping that is not available',
+  const mcp = adapterMcp(build);
+  assert.deepEqual(Object.keys(mcp.servers), intendedCapabilityIds);
+  const endpointInput = mcp.inputs.find((input) => input.id === 'azure-endpoint');
+  const secretInput = mcp.inputs.find(
+    (input) => input.id === 'azure-connector-api-key',
+  );
+  assert.deepEqual(endpointInput, {
+    type: 'promptString',
+    id: 'azure-endpoint',
+    description: 'Azure Agent Tool Server MCP endpoint',
+  });
+  assert.deepEqual(secretInput, {
+    type: 'promptString',
+    id: 'azure-connector-api-key',
+    description: 'Azure Agent Tool Server: connector-api-key',
+    password: true,
+  });
+  assert.deepEqual(mcp.servers.azure, {
+    type: 'http',
+    url: '${input:azure-endpoint}',
+    headers: {
+      'x-api-key': '${input:azure-connector-api-key}',
+    },
+  });
+});
+
+test('canonical seven-capability build uses lock and VS Code adapter schema 2', async () => {
+  const definition = await loadAgentDefinition(repositoryRoot);
+  const build = await buildVsCodeAgent(definition, { registry });
+  const generatedLock = JSON.parse(
+    await readFile(path.join(repositoryRoot, 'agent.lock'), 'utf8'),
+  );
+  const generatedMcp = JSON.parse(
+    await readFile(path.join(repositoryRoot, '.vscode', 'mcp.json'), 'utf8'),
+  );
+
+  assert.equal(AGENT_LOCK_SCHEMA_VERSION, 2);
+  assert.equal(VSCODE_ADAPTER_SCHEMA_VERSION, 2);
+  assert.equal(build.lock.schemaVersion, 2);
+  assert.equal(build.adapter.schemaVersion, 2);
+  assert.equal(generatedLock.schemaVersion, 2);
+  assert.equal(build.capabilities.length, 7);
+  assert.ok(
+    build.capabilities.every(
+      (capability) => capability.compatibility.state === 'compatible',
+    ),
+  );
+  assert.deepEqual(generatedMcp, adapterMcp(build));
+  assert.equal(Object.keys(generatedMcp.servers).length, 7);
+  assert.equal(
+    generatedMcp.servers.azure.headers['x-api-key'],
+    '${input:azure-connector-api-key}',
   );
 });
 
@@ -424,8 +530,8 @@ test('safe profile policy prefers local Vision and read-only Azure', async () =>
   assert.equal(azure?.profile.dimensions.mutation, 'read-only');
 });
 
-test('all seven intended capability identities are accounted for without faking Azure support', async () => {
-  const agentSource = await readFile(path.join(repositoryRoot, 'agent.yaml'), 'utf8');
+test('all seven intended capability identities are canonical source and policy', async () => {
+  const definition = await loadAgentDefinition(repositoryRoot);
   const routing = parse(
     await readFile(path.join(repositoryRoot, 'routing', 'workflows.yaml'), 'utf8'),
   );
@@ -438,11 +544,13 @@ test('all seven intended capability identities are accounted for without faking 
 
   assert.deepEqual(Object.keys(routing.capabilityRoles).sort(), intendedCapabilityIds);
   assert.deepEqual([...benchmark.levels.L3.capabilities].sort(), intendedCapabilityIds);
-  assert.match(agentSource, /Azure is an intended capability/u);
-  assert.doesNotMatch(
-    agentSource,
-    /^\s*-\s+id:\s+azure\s*$/mu,
-    'Azure must not be selected until Agent Kit can adapt its authenticated HTTP binding',
+  assert.deepEqual(
+    definition.capabilities.map((capability) => capability.id),
+    intendedCapabilityIds,
+  );
+  assert.deepEqual(
+    definition.capabilities.find((capability) => capability.id === 'azure'),
+    { id: 'azure', profile: 'hosted-read-only' },
   );
 });
 
@@ -453,7 +561,7 @@ test('routing policy is complete source and explicitly not runtime-enforced', as
 
   assert.equal(routing.agentId, 'developer-optimization');
   assert.equal(routing.runtimeEnforced, false);
-  assert.match(routing.boundary, /Agent Kit 0\.2\.0 does not compile or enforce/u);
+  assert.match(routing.boundary, /Agent Kit 0\.3\.0 does not compile or enforce/u);
   assert.deepEqual(
     routing.routes.map((route) => route.id),
     [
@@ -628,9 +736,9 @@ test('tracked product source contains no private or credential-shaped state', as
 
 test('Platform packages resolve at exact versions from this repository node_modules', async () => {
   const packages = [
-    ['@agent-tool-platform/agent-kit', 'agent-kit', '0.2.0'],
-    ['@agent-tool-platform/capability-registry', 'capability-registry', '0.2.0'],
-    ['@agent-tool-platform/runtime', 'runtime', '0.2.0'],
+    ['@agent-tool-platform/agent-kit', 'agent-kit', '0.3.0'],
+    ['@agent-tool-platform/capability-registry', 'capability-registry', '0.3.0'],
+    ['@agent-tool-platform/runtime', 'runtime', '0.3.0'],
   ];
 
   for (const [packageName, directoryName, expectedVersion] of packages) {

@@ -220,6 +220,12 @@ test('the canonical Agent Kit build resolves supported profiles and bindings', a
         binding: 'local-stdio',
       },
       {
+        id: 'azure',
+        version: '0.2.0',
+        profile: 'hosted-read-only',
+        binding: 'hosted-read-only-http',
+      },
+      {
         id: 'data-cruncher',
         version: '0.0.0-development',
         profile: 'local-package',
@@ -324,8 +330,8 @@ test('Platform dependencies use exact registry versions and no local protocols',
   );
 
   assert.deepEqual(platformDependencies, [
-    ['@agent-tool-platform/agent-kit', '0.2.0'],
-    ['@agent-tool-platform/capability-registry', '0.2.0'],
+    ['@agent-tool-platform/agent-kit', '0.3.0'],
+    ['@agent-tool-platform/capability-registry', '0.3.0'],
   ]);
   assert.equal(manifest.dependencies['@agent-tool-platform/runtime'], undefined);
   for (const [, version] of platformDependencies) {
@@ -340,13 +346,13 @@ test('package-lock pins exact public Platform packages and Agent Kit dependencie
   const registry = packages['node_modules/@agent-tool-platform/capability-registry'];
   const runtime = packages['node_modules/@agent-tool-platform/runtime'];
 
-  assert.equal(packages[''].dependencies['@agent-tool-platform/agent-kit'], '0.2.0');
-  assert.equal(packages[''].dependencies['@agent-tool-platform/capability-registry'], '0.2.0');
-  assert.equal(agentKit.version, '0.2.0');
-  assert.equal(agentKit.dependencies['@agent-tool-platform/runtime'], '0.2.0');
-  assert.equal(agentKit.dependencies['@agent-tool-platform/capability-registry'], '0.2.0');
-  assert.equal(registry.version, '0.2.0');
-  assert.equal(runtime.version, '0.2.0');
+  assert.equal(packages[''].dependencies['@agent-tool-platform/agent-kit'], '0.3.0');
+  assert.equal(packages[''].dependencies['@agent-tool-platform/capability-registry'], '0.3.0');
+  assert.equal(agentKit.version, '0.3.0');
+  assert.equal(agentKit.dependencies['@agent-tool-platform/runtime'], '0.3.0');
+  assert.equal(agentKit.dependencies['@agent-tool-platform/capability-registry'], '0.3.0');
+  assert.equal(registry.version, '0.3.0');
+  assert.equal(runtime.version, '0.3.0');
 
   for (const [packagePath, metadata] of Object.entries(packages)) {
     if (packagePath.includes('node_modules/@agent-tool-platform/')) {

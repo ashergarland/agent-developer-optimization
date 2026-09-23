@@ -4,7 +4,7 @@ agentId: developer-optimization
 runtimeEnforced: false
 boundary: >-
   This is versioned agent-owned policy for humans, reviews, workflows, evaluations, and future
-  routing work. Agent Kit 0.2.0 does not compile or enforce this file, and this repository does not
+  routing work. Agent Kit 0.3.0 does not compile or enforce this file, and this repository does not
   implement a routing engine.
 
 defaults:
@@ -77,8 +77,9 @@ routes:
       - doc-rag
       - explicitly-authorized-mutation
     rule: >-
-      The current VS Code composition cannot execute Azure because Agent Kit 0.2.0 reports its
-      authenticated HTTP binding as incompatible. Never substitute invented headers or credentials.
+      Use the canonical hosted-read-only Azure profile only after its endpoint, named
+      configuration, remote connection, and provider prerequisites are prepared. Generated prompt
+      references do not make the capability ready.
     mutationBoundary: >-
       Mutate only after an explicit user request and deliberate selection of a supported mutating
       profile; otherwise remain read-only.

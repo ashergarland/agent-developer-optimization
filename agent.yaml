@@ -3,9 +3,6 @@ id: developer-optimization
 name: Developer Optimization Agent
 version: "1.0.0"
 instructionsFile: instructions/agent.md
-# Azure is an intended capability, but Agent Kit 0.2.0 cannot generate a VS Code
-# binding for its authenticated HTTP profile without a Registry-defined client
-# header mapping. Keep the canonical build at the strongest compatible set.
 capabilities:
   - id: ast-summarizer
   - id: git-optimizer
@@ -14,3 +11,5 @@ capabilities:
   - id: vision
     profile: local-package
   - id: document-optimizer
+  - id: azure
+    profile: hosted-read-only

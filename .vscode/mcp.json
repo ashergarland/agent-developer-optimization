@@ -1,4 +1,17 @@
 {
+  "inputs": [
+    {
+      "description": "Azure Agent Tool Server: connector-api-key",
+      "id": "azure-connector-api-key",
+      "password": true,
+      "type": "promptString"
+    },
+    {
+      "description": "Azure Agent Tool Server MCP endpoint",
+      "id": "azure-endpoint",
+      "type": "promptString"
+    }
+  ],
   "servers": {
     "ast-summarizer": {
       "args": [
@@ -7,6 +20,13 @@
       ],
       "command": "npx",
       "type": "stdio"
+    },
+    "azure": {
+      "headers": {
+        "x-api-key": "${input:azure-connector-api-key}"
+      },
+      "type": "http",
+      "url": "${input:azure-endpoint}"
     },
     "data-cruncher": {
       "args": [

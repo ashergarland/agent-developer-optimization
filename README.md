@@ -47,10 +47,10 @@ Capability-owned instructions, permissions, prerequisites, readiness, and tool c
 authoritative for how each capability works. This repository owns the policy for when and why to
 combine them.
 
-## Intended capability set and Platform 0.2.0 result
+## Seven-capability composition
 
-The intended composition has seven first-party capabilities. The installed
-`@agent-tool-platform/capability-registry@0.2.0` is authoritative:
+The canonical agent composes all seven intended first-party capabilities. The installed
+`@agent-tool-platform/capability-registry@0.3.0` is authoritative:
 
 | Capability | Registry version/status | Artifact | Preferred profile and binding | M6 result |
 | --- | --- | --- | --- | --- |
@@ -60,16 +60,14 @@ The intended composition has seven first-party capabilities. The installed
 | Doc RAG | `0.0.0-development` / `development` | declared npm package | `local-filesystem-package` / `local-stdio` | compatible; setup required |
 | Vision | `0.0.0-development` / `development` | declared npm package | `local-package` / `local-stdio` | compatible; setup required |
 | Document Optimizer | `0.0.0-development` / `development` | declared npm package | `local-filesystem-package` / `local-stdio` | compatible; setup required |
-| Azure | `0.2.0` / `declared` | declared OCI container | `hosted-read-only` / `hosted-read-only-http` | incompatible with the VS Code adapter |
+| Azure | `0.2.0` / `declared` | declared OCI container | `hosted-read-only` / `hosted-read-only-http` | compatible; Prepare required |
 
 Vision explicitly selects `local-package`: it avoids the Azure-backed profile and provider secret,
 although the capability contract still permits creation of principal-scoped derived artifacts.
-Azure resolution correctly prefers the read-only hosted profile over `hosted-mutating`.
+Azure explicitly selects `hosted-read-only`; the default agent does not select
+`hosted-mutating`.
 
-### Current canonical composition
-
-[`agent.yaml`](./agent.yaml) selects the strongest truthful VS Code composition supported by
-Platform 0.2.0:
+[`agent.yaml`](./agent.yaml) contains:
 
 1. `ast-summarizer`
 2. `git-optimizer`
@@ -77,43 +75,24 @@ Platform 0.2.0:
 4. `doc-rag`
 5. `vision` with explicit `local-package`
 6. `document-optimizer`
+7. `azure` with explicit `hosted-read-only`
 
-Azure remains explicit intended policy and evaluation scope, but is not selected in the canonical
-definition because doing so makes `buildVsCodeAgent()` fail atomically. The repository does not
-claim a complete executable seven-capability adapter.
+### Azure authenticated HTTP
 
-### Azure authenticated-HTTP blocker
+Platform 0.3.0 Registry schema 1.1.0 declares the Azure binding's generic HTTP client mapping from
+the named `connector-api-key` configuration to the `x-api-key` request header. Agent Kit resolves
+that contract and generates:
 
-For the seventh capability, Agent Kit resolves:
+- an `azure-endpoint` prompt input;
+- a password-protected `azure-connector-api-key` prompt input;
+- an Azure remote HTTP server whose URL references the endpoint input; and
+- an `x-api-key` header that references the secret input.
 
-- capability: `azure@0.2.0`;
-- profile: `hosted-read-only`;
-- binding: `hosted-read-only-http`;
-- readiness: `incompatible-binding`; and
-- missing named configuration: `connector-api-key`.
-
-The exact compatibility reason is:
-
-> authenticated HTTP bindings require a registry-defined client header mapping that is not
-> available
-
-`buildVsCodeAgent()` throws `INCOMPATIBLE_BINDING` and emits no adapter files for the full Stage D
-definition. Agent Kit intentionally does not guess whether `connector-api-key` should become an
-`Authorization` header, API-key header, or another request shape.
-
-The smallest generic Platform follow-up is to extend the Registry binding contract with a validated,
-account-neutral mapping from a named configuration secret to an HTTP client authentication/header
-field, carry that mapping through Agent Kit resolution and lock identity, and generate the VS Code
-input/header reference without recording a value. Regression coverage must prove that:
-
-- authenticated HTTP with an explicit mapping is compatible and deterministic;
-- the generated host file references an input and never embeds a credential;
-- absent or invalid mappings remain incompatible;
-- read-only profile preference is unchanged; and
-- readiness still reports configuration, remote connection, and provider prerequisites correctly.
-
-Do not work around the blocker by editing [`.vscode/mcp.json`](./.vscode/mcp.json), inventing a
-header, embedding a credential, or adding Azure-specific adapter logic here.
+The generated adapter contains prompt references, not endpoint or credential values. Host
+compatibility does not mean preparation: without a readiness snapshot Azure remains
+`missing-configuration`, with its remote connection and Azure provider prerequisites still
+requiring setup. Do not hand-edit [`.vscode/mcp.json`](./.vscode/mcp.json), add credentials, or
+duplicate the Platform's generic HTTP adapter logic.
 
 ## Canonical source
 
@@ -128,7 +107,7 @@ Human-edited source:
 [`agent.yaml`](./agent.yaml) is the only Agent Kit definition. Routing, workflows, and evaluations
 are agent-owned policy/evaluation source, not competing definitions or executable orchestration.
 
-Agent Kit 0.2.0 does **not** compile or enforce [`routing/workflows.yaml`](./routing/workflows.yaml)
+Agent Kit 0.3.0 does **not** compile or enforce [`routing/workflows.yaml`](./routing/workflows.yaml)
 or [`workflows/`](./workflows/). They exist for human review, future Builder/routing work,
 evaluations, and later M7 analysis. This repository does not add a routing engine.
 
@@ -210,9 +189,9 @@ must be byte-identical.
 
 This independent consumer pins:
 
-- `@agent-tool-platform/agent-kit@0.2.0`;
-- `@agent-tool-platform/capability-registry@0.2.0`; and
-- transitive `@agent-tool-platform/runtime@0.2.0`.
+- `@agent-tool-platform/agent-kit@0.3.0`;
+- `@agent-tool-platform/capability-registry@0.3.0`; and
+- transitive `@agent-tool-platform/runtime@0.3.0`.
 
 All resolve from this repository's own [`node_modules/`](./node_modules/) after `npm ci`. Platform
 dependencies must never use `workspace:`, `file:`, or `link:` protocols or require a sibling
@@ -234,14 +213,16 @@ of their implementation or any capability implementation.
 
 ## Readiness, Prepare, and M7 boundaries
 
-Only AST Summarizer has a published artifact in Registry 0.2.0. Other selected local artifacts are
+Only AST Summarizer has a published artifact in Registry 0.3.0. Other selected local artifacts are
 declared but unpublished, so the generated MCP configuration uses Agent Kit's offline launch form
 and readiness remains `local-setup-required`. This is valid composition metadata, not proof that a
 capability is runnable.
 
-M6 does not install unpublished capabilities, launch servers, configure roots, provision Azure,
-configure credentials, deploy providers, create Agent Instance state, or mutate private/live state.
-Those are later Prepare and instance responsibilities.
+Azure is host-compatible but unprepared: its endpoint, `connector-api-key`, remote connection,
+provider registrations, and Azure Resource Manager access are not configured here. M6 does not
+install unpublished capabilities, launch servers, configure roots, provision Azure, configure
+credentials, deploy providers, create Agent Instance state, or mutate private/live state. Those
+are later Prepare and instance responsibilities.
 
 M6 also does not collect telemetry, calculate token savings, claim equivalent context windows,
 implement a management UI, or publish benchmark results. It provides clean policy, workflow, and

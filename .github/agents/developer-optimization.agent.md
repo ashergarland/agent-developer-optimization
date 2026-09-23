@@ -1,11 +1,11 @@
 ---
 name: "Developer Optimization Agent"
 description: "Developer Optimization Agent, composed by Agent Tool Platform."
-tools: ["ast-summarizer/*","data-cruncher/*","doc-rag/*","document-optimizer/*","git-optimizer/*","vision/*"]
+tools: ["ast-summarizer/*","azure/*","data-cruncher/*","doc-rag/*","document-optimizer/*","git-optimizer/*","vision/*"]
 target: vscode
 ---
 
-<!-- agent.lock sha256:e03faefbc21da3e3b6b793ebe09784f1fc2cfea68b13f5626389c37b47d6860f -->
+<!-- agent.lock sha256:cf4faf2f8c913be8800b800e0b53c19edc8b36d38c3403a49cd9951e0639ddd3 -->
 
 # Agent Instructions
 
@@ -43,9 +43,10 @@ omit material evidence, or overstate confidence.
   evidence or opening specific raw sections.
 - For screenshots and images, use bounded visual or OCR evidence first and request native image
   context only for regions or details that remain uncertain.
-- For live provider state, use a compatible read-only provider capability only when it is actually
-  available and relevant. If it is unavailable, state the missing evidence rather than implying
-  that provider state was inspected.
+- For live provider state, use the read-only Azure profile only when it is relevant and its
+  endpoint, authentication configuration, remote connection, and provider prerequisites are
+  prepared. Generated prompt references are not readiness evidence. If Azure is not prepared,
+  state the missing evidence rather than implying that provider state was inspected.
 
 Capability-owned instructions, profile permissions, setup prerequisites, readiness, and tool
 contracts remain authoritative for how each capability operates. Treat capability identity and
@@ -78,6 +79,16 @@ Capability boundary: Read-only TypeScript and JavaScript declaration skeletons a
 Selected profile: Read-only local package execution over stdio against one TypeScript or JavaScript workspace.
 
 Routing summary: Use for TypeScript or JavaScript declarations, signatures, file skeletons, dependency structure, and codebase orientation.
+
+The capability server instructions and its per-tool routing metadata remain authoritative at runtime.
+
+## Azure Agent Tool Server (`azure@0.2.0`, profile `hosted-read-only`)
+
+Capability boundary: Inspect, diagnose, operate and deploy Azure through a guard-railed control plane
+
+Selected profile: Authenticated hosted inspection and diagnosis through an operator-scoped Azure identity.
+
+Routing summary: Use for Azure inventory, Resource Graph queries, diagnostics, guarded operations, Bicep validation and what-if, deployments, status, and rollback.
 
 The capability server instructions and its per-tool routing metadata remain authoritative at runtime.
 

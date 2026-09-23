@@ -32,9 +32,10 @@ omit material evidence, or overstate confidence.
   evidence or opening specific raw sections.
 - For screenshots and images, use bounded visual or OCR evidence first and request native image
   context only for regions or details that remain uncertain.
-- For live provider state, use a compatible read-only provider capability only when it is actually
-  available and relevant. If it is unavailable, state the missing evidence rather than implying
-  that provider state was inspected.
+- For live provider state, use the read-only Azure profile only when it is relevant and its
+  endpoint, authentication configuration, remote connection, and provider prerequisites are
+  prepared. Generated prompt references are not readiness evidence. If Azure is not prepared,
+  state the missing evidence rather than implying that provider state was inspected.
 
 Capability-owned instructions, profile permissions, setup prerequisites, readiness, and tool
 contracts remain authoritative for how each capability operates. Treat capability identity and
