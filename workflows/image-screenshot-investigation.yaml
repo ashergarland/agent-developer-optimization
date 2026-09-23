@@ -1,0 +1,18 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: image-screenshot-investigation
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Extract decisive visual evidence from an image or screenshot without unnecessary native context.
+preferredProgression:
+  - capability: vision
+    purpose: Perform bounded image analysis, OCR, comparison, or region extraction.
+fallback:
+  condition: OCR, compression, cropping, or derived artifacts leave a material visual detail uncertain.
+  action: Inspect the specific region in native image context.
+evidenceExpectations:
+  - Identify the source image and analyzed regions.
+  - Separate visible text or features from inferred meaning.
+  - State OCR or image-quality limitations.
+stoppingCondition: Relevant visual facts are extracted and remaining ambiguity is explicit.
+mutationBoundary: Do not modify the source image; capability-owned derived artifacts are permitted.

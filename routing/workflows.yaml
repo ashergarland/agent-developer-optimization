@@ -1,2 +1,85 @@
-# Agent-owned routing source reserved for a concrete agent.
-# The M5.5 composition build does not consume this file or implement routing behavior.
+schemaVersion: 1
+kind: developer-optimization-routing-policy
+agentId: developer-optimization
+runtimeEnforced: false
+boundary: >-
+  This is versioned agent-owned policy for humans, reviews, workflows, evaluations, and future
+  routing work. Agent Kit 0.3.0 does not compile or enforce this file, and this repository does not
+  implement a routing engine.
+
+defaults:
+  - Gather evidence before making claims.
+  - Prefer compact specialized representations before expensive raw context.
+  - Narrow scope before reading large files, documents, images, diffs, or outputs.
+  - Use the smallest sufficient capability sequence rather than calling every capability.
+  - Preserve outcome quality above token or context reduction.
+  - Escalate to targeted raw or native context when optimization removes necessary evidence.
+  - Begin read-only and cross a mutation boundary only after an explicit request and authorization.
+
+capabilityRoles:
+  ast-summarizer: Code declarations, signatures, structure, and local dependency orientation.
+  git-optimizer: Bounded repository changes, diffs, configuration changes, and changed-symbol context.
+  data-cruncher: Bounded filtering and reduction of large JSON, JSONL, logs, and text.
+  doc-rag: Provenance-rich retrieval of relevant documentation without loading an entire corpus.
+  document-optimizer: Progressive-fidelity PDF and DOCX representations before raw document content.
+  vision: Bounded image analysis, OCR, comparison, and optimized visual evidence.
+  azure: Provider and resource inspection or authorized operations, with read-only diagnosis first.
+
+routes:
+  - id: pr-or-commit-review
+    when: Reviewing a pull request, commit range, or repository change.
+    progression:
+      - git-optimizer
+      - ast-summarizer
+      - doc-rag
+      - targeted-raw-source
+    rule: Add each later step only when earlier evidence cannot establish impact or correctness.
+
+  - id: codebase-or-subsystem-understanding
+    when: Explaining a codebase, subsystem, dependency path, or implementation boundary.
+    progression:
+      - ast-summarizer
+      - git-optimizer
+      - doc-rag
+      - targeted-raw-source
+    rule: Use Git context only when history or current changes clarify the structure.
+
+  - id: large-log-or-structured-output
+    when: Investigating large logs, JSON, JSONL, or structured command/provider output.
+    progression:
+      - data-cruncher
+      - bounded-relevant-evidence
+      - azure
+      - doc-rag
+    rule: Use Azure only for relevant live provider state and Doc RAG only for operational guidance.
+
+  - id: document-investigation
+    when: Investigating PDF or DOCX content.
+    progression:
+      - document-optimizer
+      - doc-rag
+      - targeted-raw-document
+    rule: Preserve page, section, table, and figure provenance through escalation.
+
+  - id: image-or-screenshot-investigation
+    when: Investigating screenshots, diagrams, scanned pages, or other images.
+    progression:
+      - vision
+      - optimized-visual-evidence
+      - native-image-context
+    rule: Escalate only the regions or visual details that remain material and uncertain.
+
+  - id: azure-diagnosis
+    when: Provider or resource state is material to diagnosis.
+    progression:
+      - azure-read-only
+      - data-cruncher
+      - doc-rag
+      - explicitly-authorized-mutation
+    rule: >-
+      Use the canonical hosted-read-only Azure profile only after its endpoint, named
+      configuration, remote connection, and provider prerequisites are prepared. Generated prompt
+      references do not make the capability ready.
+    mutationBoundary: >-
+      Mutate only after an explicit user request and deliberate selection of a supported mutating
+      profile; otherwise remain read-only.

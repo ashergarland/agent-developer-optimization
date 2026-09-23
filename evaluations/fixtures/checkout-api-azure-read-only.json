@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "kind": "synthetic-read-only-provider-evidence",
+  "provider": "azure",
+  "live": false,
+  "mutationAllowed": false,
+  "resource": {
+    "type": "containerized-deployment",
+    "name": "checkout-api"
+  },
+  "observations": {
+    "environment": {
+      "APP_PORT": "8080"
+    },
+    "ingressTargetPort": 8080,
+    "readinessProbe": {
+      "protocol": "TCP",
+      "port": 8080
+    },
+    "processLog": "checkout-api listening on 3000",
+    "readinessResult": "connection refused"
+  }
+}

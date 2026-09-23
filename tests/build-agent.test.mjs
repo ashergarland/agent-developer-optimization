@@ -39,7 +39,7 @@ const createFixture = async (context, options = {}) => {
   const instructions = Object.hasOwn(options, 'instructions')
     ? options.instructions
     : defaultInstructions;
-  const root = await mkdtemp(path.join(tmpdir(), 'agent-composition-template-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'agent-composition-fixture-'));
   context.after(async () => rm(root, { recursive: true, force: true }));
   await writeFile(path.join(root, 'agent.yaml'), source, 'utf8');
 
@@ -202,7 +202,7 @@ test('the real published first-party Registry loads through its public API', asy
   assert.equal(reader.getCapability('git-optimizer')?.version.value, '0.1.0');
 });
 
-test('the real two-capability Agent Kit build resolves profiles and bindings', async () => {
+test('the canonical Agent Kit build resolves supported profiles and bindings', async () => {
   const { first } = await getRepeatedBuilds();
 
   assert.deepEqual(
@@ -220,8 +220,38 @@ test('the real two-capability Agent Kit build resolves profiles and bindings', a
         binding: 'local-stdio',
       },
       {
+        id: 'azure',
+        version: '0.2.0',
+        profile: 'hosted-read-only',
+        binding: 'hosted-read-only-http',
+      },
+      {
+        id: 'data-cruncher',
+        version: '0.0.0-development',
+        profile: 'local-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'doc-rag',
+        version: '0.0.0-development',
+        profile: 'local-filesystem-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'document-optimizer',
+        version: '0.0.0-development',
+        profile: 'local-filesystem-package',
+        binding: 'local-stdio',
+      },
+      {
         id: 'git-optimizer',
         version: '0.1.0',
+        profile: 'local-package',
+        binding: 'local-stdio',
+      },
+      {
+        id: 'vision',
+        version: '0.0.0-development',
         profile: 'local-package',
         binding: 'local-stdio',
       },
@@ -236,7 +266,7 @@ test('agent.lock is byte-identical across repeated builds', async () => {
 
 test('the VS Code agent file is byte-identical across repeated builds', async () => {
   const { first, second } = await getRepeatedBuilds();
-  const generatedPath = '.github/agents/repository-context.agent.md';
+  const generatedPath = '.github/agents/developer-optimization.agent.md';
   assert.equal(adapterContent(first, generatedPath), adapterContent(second, generatedPath));
 });
 
@@ -300,8 +330,8 @@ test('Platform dependencies use exact registry versions and no local protocols',
   );
 
   assert.deepEqual(platformDependencies, [
-    ['@agent-tool-platform/agent-kit', '0.2.0'],
-    ['@agent-tool-platform/capability-registry', '0.2.0'],
+    ['@agent-tool-platform/agent-kit', '0.3.0'],
+    ['@agent-tool-platform/capability-registry', '0.3.0'],
   ]);
   assert.equal(manifest.dependencies['@agent-tool-platform/runtime'], undefined);
   for (const [, version] of platformDependencies) {
@@ -316,13 +346,13 @@ test('package-lock pins exact public Platform packages and Agent Kit dependencie
   const registry = packages['node_modules/@agent-tool-platform/capability-registry'];
   const runtime = packages['node_modules/@agent-tool-platform/runtime'];
 
-  assert.equal(packages[''].dependencies['@agent-tool-platform/agent-kit'], '0.2.0');
-  assert.equal(packages[''].dependencies['@agent-tool-platform/capability-registry'], '0.2.0');
-  assert.equal(agentKit.version, '0.2.0');
-  assert.equal(agentKit.dependencies['@agent-tool-platform/runtime'], '0.2.0');
-  assert.equal(agentKit.dependencies['@agent-tool-platform/capability-registry'], '0.2.0');
-  assert.equal(registry.version, '0.2.0');
-  assert.equal(runtime.version, '0.2.0');
+  assert.equal(packages[''].dependencies['@agent-tool-platform/agent-kit'], '0.3.0');
+  assert.equal(packages[''].dependencies['@agent-tool-platform/capability-registry'], '0.3.0');
+  assert.equal(agentKit.version, '0.3.0');
+  assert.equal(agentKit.dependencies['@agent-tool-platform/runtime'], '0.3.0');
+  assert.equal(agentKit.dependencies['@agent-tool-platform/capability-registry'], '0.3.0');
+  assert.equal(registry.version, '0.3.0');
+  assert.equal(runtime.version, '0.3.0');
 
   for (const [packagePath, metadata] of Object.entries(packages)) {
     if (packagePath.includes('node_modules/@agent-tool-platform/')) {

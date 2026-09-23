@@ -1,0 +1,22 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: large-data-investigation
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Investigate large logs or structured data without loading the complete input.
+preferredProgression:
+  - capability: data-cruncher
+    purpose: Filter, count, group, and extract bounded records from large JSON, JSONL, logs, or text.
+  - capability: azure
+    purpose: Obtain read-only provider evidence only when live resource state is material.
+  - capability: doc-rag
+    purpose: Retrieve operational documentation needed to interpret the bounded evidence.
+fallback:
+  condition: Reduction may have hidden ordering, surrounding context, or a decisive raw value.
+  action: Inspect the smallest relevant raw range and preserve its offsets or timestamps.
+evidenceExpectations:
+  - Record source scope, filters, time range, counts, and representative records.
+  - Preserve error text and keys needed to reproduce the conclusion.
+  - Identify sampling or truncation limits.
+stoppingCondition: The hypothesis is confirmed or rejected by bounded reproducible evidence.
+mutationBoundary: Investigation is read-only; provider mutation is outside this workflow.

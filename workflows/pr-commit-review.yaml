@@ -1,0 +1,22 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: pr-commit-review
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Review a pull request or commit range with bounded, evidence-backed change context.
+preferredProgression:
+  - capability: git-optimizer
+    purpose: Identify changed files, symbols, configuration keys, routes, and the bounded diff surface.
+  - capability: ast-summarizer
+    purpose: Orient within affected code declarations and dependencies.
+  - capability: doc-rag
+    purpose: Retrieve relevant architecture or API documentation when the change depends on it.
+fallback:
+  condition: Optimized evidence cannot verify implementation behavior or a material edge case.
+  action: Read only the required raw diff regions and source files.
+evidenceExpectations:
+  - Identify the compared revisions and changed surface.
+  - Tie each finding to changed code, configuration, structure, or relevant documentation.
+  - Label inferred impact and unresolved uncertainty.
+stoppingCondition: Findings and non-findings are supported without loading unrelated repository content.
+mutationBoundary: Review is read-only; do not modify the repository unless separately requested.

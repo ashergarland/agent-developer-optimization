@@ -1,0 +1,28 @@
+schemaVersion: 1
+kind: developer-optimization-workflow
+id: failing-deployment-diagnosis
+agentId: developer-optimization
+runtimeEnforced: false
+objective: Diagnose a failing deployment by correlating code, configuration, provider, and operational evidence.
+preferredProgression:
+  - capability: git-optimizer
+    purpose: Identify recent application and deployment configuration changes.
+  - capability: ast-summarizer
+    purpose: Orient within affected startup, configuration, and health-check code.
+  - capability: azure
+    purpose: Inspect relevant provider state through a compatible read-only binding when available.
+  - capability: data-cruncher
+    purpose: Reduce large provider responses or deployment logs to bounded decisive evidence.
+  - capability: doc-rag
+    purpose: Retrieve relevant operational guidance or architecture constraints.
+fallback:
+  condition: Compact evidence leaves the failing runtime path or configuration value unresolved.
+  action: Inspect targeted raw manifests, source, logs, or read-only provider output.
+evidenceExpectations:
+  - Correlate revisions, deployed configuration, observed state, and failure symptoms.
+  - State whether provider evidence is live, mocked, stale, or unavailable.
+  - Distinguish causal evidence from plausible but unsupported leads.
+stoppingCondition: One supported causal chain explains the failure and yields a bounded remediation.
+mutationBoundary: >-
+  Diagnose read-only first. Change provider or deployment state only when explicitly requested and
+  a compatible, deliberately selected mutating profile authorizes it.

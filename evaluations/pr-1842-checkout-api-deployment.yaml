@@ -1,0 +1,90 @@
+schemaVersion: 1
+kind: developer-optimization-benchmark
+id: pr-1842-checkout-api-deployment
+status: source-only
+measurements: not-recorded
+scenario: Review PR 1842 and diagnose why the checkout-api deployment is failing.
+
+groundTruth:
+  applicationChange:
+    before:
+      environmentVariable: APP_PORT
+      deployedDefault: 8080
+    after:
+      environmentVariable: PORT
+      localDefault: 3000
+  deploymentConfiguration:
+    environmentVariable: APP_PORT
+    value: 8080
+  ingress:
+    port: 8080
+  readiness:
+    protocol: TCP
+    port: 8080
+  runtime:
+    effectiveListenPort: 3000
+  causalChain:
+    - The application no longer reads APP_PORT.
+    - The deployment does not provide PORT, so the process uses the local default 3000.
+    - Ingress and TCP readiness continue to target port 8080.
+    - TCP readiness receives connection refused because the process is listening on 3000.
+  remediation:
+    changeDeploymentEnvironmentName:
+      from: APP_PORT
+      to: PORT
+    retainDeploymentValue: 8080
+    retainReadinessPort: 8080
+    retainIngressPort: 8080
+  falseLead:
+    change: /health -> /healthz
+    reason: The readiness probe is TCP and does not request an HTTP path.
+
+levels:
+  L1:
+    capabilities:
+      - ast-summarizer
+      - git-optimizer
+      - data-cruncher
+    expectation: Establish the change, deployed configuration mismatch, port divergence, and false lead.
+  L2:
+    capabilities:
+      - ast-summarizer
+      - git-optimizer
+      - data-cruncher
+      - doc-rag
+      - vision
+      - document-optimizer
+    expectation: Add bounded documentation, image, or document evidence without weakening the L1 conclusion.
+  L3:
+    capabilities:
+      - ast-summarizer
+      - git-optimizer
+      - data-cruncher
+      - doc-rag
+      - vision
+      - document-optimizer
+      - azure
+    providerEvidence:
+      path: fixtures/checkout-api-azure-read-only.json
+      mode: checked-in-read-only-mock
+      liveMutation: false
+    expectation: Corroborate the diagnosis with synthetic read-only provider evidence.
+
+controlledEvaluationContract:
+  requirements:
+    - Same model and version.
+    - Same host.
+    - Same relevant instructions.
+    - Same budgets.
+    - Same cache conditions.
+    - Same tool-call limits.
+    - Fresh workspace and session.
+    - Baseline uses raw or general mechanisms.
+    - Optimized run uses the Developer Optimization Agent.
+    - Raw fallback is recorded.
+  priorities:
+    primary: Outcome quality.
+    secondary: Context and token reduction.
+  validatedQuantitativeClaims:
+    minimumAlternatingBaselineOptimizedPairs: 5
+    currentStatus: No measurements or superiority claims in M6.

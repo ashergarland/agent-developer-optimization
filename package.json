@@ -1,8 +1,8 @@
 {
-  "name": "agent-composition-template",
+  "name": "agent-developer-optimization",
   "version": "1.0.0",
   "private": true,
-  "description": "Reusable canonical agent composition template for Agent Tool Platform.",
+  "description": "Developer Optimization Agent composition for Agent Tool Platform.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -14,8 +14,8 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@agent-tool-platform/agent-kit": "0.2.0",
-    "@agent-tool-platform/capability-registry": "0.2.0",
+    "@agent-tool-platform/agent-kit": "0.3.0",
+    "@agent-tool-platform/capability-registry": "0.3.0",
     "yaml": "2.9.1"
   }
 }
