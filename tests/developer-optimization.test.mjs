@@ -8,8 +8,11 @@ import {
   AGENT_LOCK_SCHEMA_VERSION,
   VSCODE_ADAPTER_SCHEMA_VERSION,
   buildVsCodeAgent,
+  createPreparationPlan,
   createReadinessPlan,
+  prepareAgent,
   resolveAgentDefinition,
+  serializePreparedAgentInstance,
   vscodeHostAdapter,
 } from '@agent-tool-platform/agent-kit';
 import {
@@ -120,10 +123,10 @@ const expectedRegistry = {
     bindings: [['local-stdio', 'local-package', 'stdio', 'local']],
   },
   azure: {
-    version: '0.2.0',
-    status: 'declared',
+    version: '0.3.0',
+    status: 'released',
     artifacts: [
-      ['oci-container', 'oci', 'ghcr.io/ashergarland/agent-tool-server-azure', 'declared'],
+      ['oci-container', 'oci', 'ghcr.io/ashergarland/agent-tool-server-azure', 'published'],
     ],
     profiles: [
       ['hosted-mutating', 'mutating', 'external', ['connector-api-key']],
@@ -188,6 +191,9 @@ test('canonical identity and top-level instructions describe the real agent', as
     definition.capabilities.map((capability) => capability.id),
     intendedCapabilityIds,
   );
+  assert.ok(
+    definition.capabilities.every((capability) => !Object.hasOwn(capability, 'version')),
+  );
   assert.deepEqual(
     definition.capabilities.find((capability) => capability.id === 'vision'),
     { id: 'vision', profile: 'local-package' },
@@ -203,7 +209,7 @@ test('canonical identity and top-level instructions describe the real agent', as
   assert.doesNotMatch(definition.instructions, /Use the available read-only repository capabilities/u);
 });
 
-test('Registry 0.3.0 exposes schema 1.1.0 and every intended capability', () => {
+test('Registry 0.4.0 exposes schema 1.1.0 and every intended capability', () => {
   assert.equal(capabilityRegistrySchemaVersion, '1.1.0');
   assert.equal(registryDocument.schemaVersion, '1.1.0');
   assert.deepEqual(
@@ -251,6 +257,9 @@ test('Registry 0.3.0 exposes schema 1.1.0 and every intended capability', () => 
   }
 
   const azure = registry.getCapability('azure');
+  assert.ok(azure);
+  assert.equal(azure.artifacts[0].reference, 'v0.3.0');
+  assert.equal(azure.source.revision, 'd036a12b5028c9d873a0fc6eec5ec450aebb8414');
   const binding = azure?.bindings.find(
     (candidate) => candidate.id === 'hosted-read-only-http',
   );
@@ -407,9 +416,19 @@ test('Stage D composes Azure through the authenticated read-only HTTP binding', 
   );
   assert.ok(azure);
   assert.equal(azure.status, 'resolved');
+  assert.equal(azure.capability.version.value, '0.3.0');
+  assert.equal(azure.capability.version.status, 'released');
   assert.equal(azure.profile.id, 'hosted-read-only');
   assert.equal(azure.binding.id, 'hosted-read-only-http');
-  assert.equal(azure.binding.artifact.availability, 'declared');
+  assert.deepEqual(azure.binding.artifact, {
+    id: 'oci-container',
+    kind: 'oci',
+    identifier: 'ghcr.io/ashergarland/agent-tool-server-azure',
+    version: '0.3.0',
+    availability: 'published',
+    reference: 'v0.3.0',
+    sourceRevision: 'd036a12b5028c9d873a0fc6eec5ec450aebb8414',
+  });
   assert.deepEqual(azure.compatibility, {
     state: 'compatible',
     reasons: [],
@@ -514,6 +533,159 @@ test('canonical seven-capability build uses lock and VS Code adapter schema 2', 
   );
 });
 
+test('canonical build produces a truthful deterministic H7 preparation plan', async () => {
+  const definition = await loadAgentDefinition(repositoryRoot);
+  const build = await buildVsCodeAgent(definition, { registry });
+  const options = {
+    environmentId: 'synthetic-h7-compatibility',
+    readinessSnapshot: { schemaVersion: 1 },
+  };
+  const plan = createPreparationPlan(build, options);
+
+  assert.deepEqual(plan, createPreparationPlan(build, options));
+  assert.equal(plan.schemaVersion, 1);
+  assert.equal(plan.kind, 'agent-preparation-plan');
+  assert.equal(plan.instance.environmentId, 'synthetic-h7-compatibility');
+  assert.deepEqual(plan.agentDefinition, build.instanceIdentity.agentDefinition);
+  assert.deepEqual(plan.build, build.instanceIdentity.build);
+  assert.deepEqual(
+    plan.actions
+      .filter((action) => action.kind === 'make-local-artifact-available')
+      .map((action) => action.binding.capabilityId),
+    stageCCapabilityIds,
+  );
+  assert.deepEqual(
+    plan.actions
+      .filter((action) => action.binding?.capabilityId === 'azure')
+      .map((action) => [
+        action.kind,
+        action.configurationName ?? action.prerequisiteId ?? null,
+      ]),
+    [
+      ['verify-configuration', 'connector-api-key'],
+      ['verify-provider-prerequisite', 'azure-provider-registrations'],
+      ['verify-provider-prerequisite', 'azure-resource-manager'],
+      ['verify-remote-connection', null],
+    ],
+  );
+  assert.deepEqual(
+    plan.actions.find((action) => action.kind === 'prepare-host-integration')?.files.map(
+      (file) => file.path,
+    ),
+    ['.github/agents/developer-optimization.agent.md', '.vscode/mcp.json'],
+  );
+
+  const prepared = await prepareAgent(build, {
+    ...options,
+    clock: { now: () => new Date('2026-01-01T00:00:00.000Z') },
+  });
+  assert.equal(prepared.runnable, false);
+  assert.equal(prepared.instance.state, 'NEEDS_SETUP');
+  assert.equal(prepared.setupRequirements.length, plan.actions.length);
+  assert.ok(
+    prepared.actionResults.every((result) => result.status === 'setup-required'),
+  );
+  assert.deepEqual(
+    prepared.instance.bindings.map(({ capabilityId, readiness }) => ({
+      capabilityId,
+      readiness,
+    })),
+    [
+      { capabilityId: 'ast-summarizer', readiness: 'local-setup-required' },
+      { capabilityId: 'azure', readiness: 'missing-configuration' },
+      { capabilityId: 'data-cruncher', readiness: 'local-setup-required' },
+      { capabilityId: 'doc-rag', readiness: 'local-setup-required' },
+      { capabilityId: 'document-optimizer', readiness: 'local-setup-required' },
+      { capabilityId: 'git-optimizer', readiness: 'local-setup-required' },
+      { capabilityId: 'vision', readiness: 'local-setup-required' },
+    ],
+  );
+});
+
+test('prepareAgent accepts synthetic evidence without live work or persistent state', async () => {
+  const definition = await loadAgentDefinition(repositoryRoot);
+  const build = await buildVsCodeAgent(definition, { registry });
+  const azureBinding = build.instanceIdentity.bindings.find(
+    (binding) => binding.capabilityId === 'azure',
+  );
+  assert.ok(azureBinding);
+
+  const readinessSnapshot = {
+    schemaVersion: 1,
+    availableLocalBindings: build.instanceIdentity.bindings
+      .filter((binding) => binding.mode === 'local')
+      .map((binding) => binding.key),
+    availableRemoteBindings: [azureBinding.key],
+    availableProviderPrerequisites: [
+      `${azureBinding.key}/azure-provider-registrations`,
+      `${azureBinding.key}/azure-resource-manager`,
+    ],
+    configuration: [
+      {
+        bindingKey: azureBinding.key,
+        availableNames: ['connector-api-key'],
+      },
+    ],
+  };
+  const options = {
+    environmentId: 'synthetic-h7-compatibility',
+    readinessSnapshot,
+    hostIntegration: 'available',
+  };
+  const plan = createPreparationPlan(build, options);
+  assert.ok(
+    plan.actions
+      .filter((action) => action.binding?.mode === 'local')
+      .every((action) => action.kind === 'verify-local-artifact'),
+  );
+  const generatedPaths = [
+    'agent.lock',
+    '.github/agents/developer-optimization.agent.md',
+    '.vscode/mcp.json',
+  ];
+  const before = await Promise.all(
+    generatedPaths.map((relativePath) =>
+      readFile(path.join(repositoryRoot, ...relativePath.split('/')), 'utf8'),
+    ),
+  );
+  let driverCalls = 0;
+
+  const prepared = await prepareAgent(build, {
+    ...options,
+    driver: {
+      async execute() {
+        driverCalls += 1;
+        throw new Error('Synthetic readiness evidence should avoid live preparation.');
+      },
+    },
+    clock: { now: () => new Date('2026-01-01T00:00:00.000Z') },
+  });
+
+  assert.deepEqual(prepared.plan, plan);
+  assert.equal(driverCalls, 0);
+  assert.equal(prepared.runnable, true);
+  assert.equal(prepared.disposition, 'created');
+  assert.equal(prepared.instance.environmentId, options.environmentId);
+  assert.equal(prepared.instance.preparedAt, '2026-01-01T00:00:00.000Z');
+  assert.equal(prepared.instance.state, 'READY');
+  assert.equal(prepared.instance.bindings.length, 7);
+  assert.ok(prepared.instance.bindings.every((binding) => binding.state === 'READY'));
+  assert.ok(prepared.actionResults.every((result) => result.status === 'already-ready'));
+  assert.deepEqual(prepared.setupRequirements, []);
+  assert.deepEqual(
+    await Promise.all(
+      generatedPaths.map((relativePath) =>
+        readFile(path.join(repositoryRoot, ...relativePath.split('/')), 'utf8'),
+      ),
+    ),
+    before,
+  );
+
+  const serializedInstance = serializePreparedAgentInstance(prepared.instance);
+  assert.doesNotMatch(serializedInstance, /connector-api-key|x-api-key|azure-endpoint/u);
+  assert.doesNotMatch(serializedInstance, /(?:[A-Za-z]:\\Users\\|\/Users\/|\/home\/)/u);
+});
+
 test('safe profile policy prefers local Vision and read-only Azure', async () => {
   const { resolution: stageC } = await getStage('C');
   const { resolution: stageD } = await getStage('D');
@@ -561,7 +733,7 @@ test('routing policy is complete source and explicitly not runtime-enforced', as
 
   assert.equal(routing.agentId, 'developer-optimization');
   assert.equal(routing.runtimeEnforced, false);
-  assert.match(routing.boundary, /Agent Kit 0\.3\.0 does not compile or enforce/u);
+  assert.match(routing.boundary, /Agent Kit 0\.4\.0 does not compile or enforce/u);
   assert.deepEqual(
     routing.routes.map((route) => route.id),
     [
@@ -736,9 +908,9 @@ test('tracked product source contains no private or credential-shaped state', as
 
 test('Platform packages resolve at exact versions from this repository node_modules', async () => {
   const packages = [
-    ['@agent-tool-platform/agent-kit', 'agent-kit', '0.3.0'],
-    ['@agent-tool-platform/capability-registry', 'capability-registry', '0.3.0'],
-    ['@agent-tool-platform/runtime', 'runtime', '0.3.0'],
+    ['@agent-tool-platform/agent-kit', 'agent-kit', '0.4.0'],
+    ['@agent-tool-platform/capability-registry', 'capability-registry', '0.4.0'],
+    ['@agent-tool-platform/runtime', 'runtime', '0.4.0'],
   ];
 
   for (const [packageName, directoryName, expectedVersion] of packages) {

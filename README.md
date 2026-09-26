@@ -17,8 +17,7 @@ Reusable Capabilities
   -> Canonical Agent Source (this repository)
   -> Agent Kit Build (this repository)
   -> agent.lock / bindings / VS Code adapter (this repository)
-  -> Prepare later
-  -> Agent Instance later
+  -> Prepare / Agent Instance downstream
   -> M7 measurement and observability later
 ```
 
@@ -50,17 +49,17 @@ combine them.
 ## Seven-capability composition
 
 The canonical agent composes all seven intended first-party capabilities. The installed
-`@agent-tool-platform/capability-registry@0.3.0` is authoritative:
+`@agent-tool-platform/capability-registry@0.4.0` is authoritative:
 
-| Capability | Registry version/status | Artifact | Preferred profile and binding | M6 result |
+| Capability | Registry version/status | Artifact | Preferred profile and binding | Build/readiness result |
 | --- | --- | --- | --- | --- |
-| AST Summarizer | `0.1.1` / `released` | published npm package | `local-package` / `local-stdio` | compatible |
+| AST Summarizer | `0.1.1` / `released` | published npm package | `local-package` / `local-stdio` | compatible; local materialization evidence required |
 | Git Optimizer | `0.1.0` / `declared` | declared npm package | `local-package` / `local-stdio` | compatible; setup required |
 | Data Cruncher | `0.0.0-development` / `development` | declared npm package | `local-package` / `local-stdio` | compatible; setup required |
 | Doc RAG | `0.0.0-development` / `development` | declared npm package | `local-filesystem-package` / `local-stdio` | compatible; setup required |
 | Vision | `0.0.0-development` / `development` | declared npm package | `local-package` / `local-stdio` | compatible; setup required |
 | Document Optimizer | `0.0.0-development` / `development` | declared npm package | `local-filesystem-package` / `local-stdio` | compatible; setup required |
-| Azure | `0.2.0` / `declared` | declared OCI container | `hosted-read-only` / `hosted-read-only-http` | compatible; Prepare required |
+| Azure | `0.3.0` / `released` | published OCI container | `hosted-read-only` / `hosted-read-only-http` | compatible; configuration, connection, and provider setup required |
 
 Vision explicitly selects `local-package`: it avoids the Azure-backed profile and provider secret,
 although the capability contract still permits creation of principal-scoped derived artifacts.
@@ -79,7 +78,7 @@ Azure explicitly selects `hosted-read-only`; the default agent does not select
 
 ### Azure authenticated HTTP
 
-Platform 0.3.0 Registry schema 1.1.0 declares the Azure binding's generic HTTP client mapping from
+Platform 0.4.0 Registry schema 1.1.0 declares the Azure binding's generic HTTP client mapping from
 the named `connector-api-key` configuration to the `x-api-key` request header. Agent Kit resolves
 that contract and generates:
 
@@ -107,7 +106,7 @@ Human-edited source:
 [`agent.yaml`](./agent.yaml) is the only Agent Kit definition. Routing, workflows, and evaluations
 are agent-owned policy/evaluation source, not competing definitions or executable orchestration.
 
-Agent Kit 0.3.0 does **not** compile or enforce [`routing/workflows.yaml`](./routing/workflows.yaml)
+Agent Kit 0.4.0 does **not** compile or enforce [`routing/workflows.yaml`](./routing/workflows.yaml)
 or [`workflows/`](./workflows/). They exist for human review, future Builder/routing work,
 evaluations, and later M7 analysis. This repository does not add a routing engine.
 
@@ -178,6 +177,7 @@ npm ci
 npm test
 npm run agent:check
 npm run agent:build
+npm run agent:check
 git diff --check
 ```
 
@@ -189,9 +189,9 @@ must be byte-identical.
 
 This independent consumer pins:
 
-- `@agent-tool-platform/agent-kit@0.3.0`;
-- `@agent-tool-platform/capability-registry@0.3.0`; and
-- transitive `@agent-tool-platform/runtime@0.3.0`.
+- `@agent-tool-platform/agent-kit@0.4.0`;
+- `@agent-tool-platform/capability-registry@0.4.0`; and
+- transitive `@agent-tool-platform/runtime@0.4.0`.
 
 All resolve from this repository's own [`node_modules/`](./node_modules/) after `npm ci`. Platform
 dependencies must never use `workspace:`, `file:`, or `link:` protocols or require a sibling
@@ -213,20 +213,27 @@ of their implementation or any capability implementation.
 
 ## Readiness, Prepare, and M7 boundaries
 
-Only AST Summarizer has a published artifact in Registry 0.3.0. Other selected local artifacts are
-declared but unpublished, so the generated MCP configuration uses Agent Kit's offline launch form
-and readiness remains `local-setup-required`. This is valid composition metadata, not proof that a
-capability is runnable.
+Among the selected local capabilities, only AST Summarizer has a published artifact in Registry
+0.4.0. A published artifact still requires explicit evidence that it has been materialized in the
+target environment. Other selected local artifacts are declared but unpublished, so the generated
+MCP configuration uses Agent Kit's offline launch form. Without environment evidence every local
+binding remains `local-setup-required`; composition metadata is not proof that a capability is
+runnable.
 
 Azure is host-compatible but unprepared: its endpoint, `connector-api-key`, remote connection,
-provider registrations, and Azure Resource Manager access are not configured here. M6 does not
-install unpublished capabilities, launch servers, configure roots, provision Azure, configure
-credentials, deploy providers, create Agent Instance state, or mutate private/live state. Those
-are later Prepare and instance responsibilities.
+provider registrations, and Azure Resource Manager access are not configured here. Its released
+OCI artifact does not make those environment requirements ready.
 
-M6 also does not collect telemetry, calculate token savings, claim equivalent context windows,
-implement a management UI, or publish benchmark results. It provides clean policy, workflow, and
-evaluation source for later M7 work.
+Platform 0.4.0 now exposes `createPreparationPlan()`, `prepareAgent()`, and Prepared Agent Instance
+APIs. Focused tests prove that this canonical seven-capability Build can flow through those APIs
+using explicit synthetic readiness evidence. This repository remains a composition rather than a
+Prepare implementation: it does not install capabilities, launch servers, configure roots, make
+live Azure calls, provision Azure, configure credentials, deploy providers, or persist
+operator-specific Agent Instance state.
+
+The repository also does not collect telemetry, calculate token savings, claim equivalent context
+windows, implement Agent Management, or publish benchmark results. It provides clean policy,
+workflow, and evaluation source for later M7 measurement and observability work.
 
 ## Public repository safety
 
