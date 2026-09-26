@@ -5,7 +5,7 @@ tools: ["ast-summarizer/*","azure/*","data-cruncher/*","doc-rag/*","document-opt
 target: vscode
 ---
 
-<!-- agent.lock sha256:cf4faf2f8c913be8800b800e0b53c19edc8b36d38c3403a49cd9951e0639ddd3 -->
+<!-- agent.lock sha256:4f60844ddaf3600c1d42d35f00a6e1f7fac7c7d857912783cbbfbe3af00ce761 -->
 
 # Agent Instructions
 
@@ -82,7 +82,7 @@ Routing summary: Use for TypeScript or JavaScript declarations, signatures, file
 
 The capability server instructions and its per-tool routing metadata remain authoritative at runtime.
 
-## Azure Agent Tool Server (`azure@0.2.0`, profile `hosted-read-only`)
+## Azure Agent Tool Server (`azure@0.3.0`, profile `hosted-read-only`)
 
 Capability boundary: Inspect, diagnose, operate and deploy Azure through a guard-railed control plane
 

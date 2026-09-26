@@ -67,13 +67,13 @@
     },
     {
       "artifact": {
-        "availability": "declared",
+        "availability": "published",
         "id": "oci-container",
         "identifier": "ghcr.io/ashergarland/agent-tool-server-azure",
         "kind": "oci",
-        "reference": "server.json#/packages/0",
-        "sourceRevision": "a2ea5bac9162159b4b0b04ce12e80d46a1b9a79c",
-        "version": "0.2.0"
+        "reference": "v0.3.0",
+        "sourceRevision": "d036a12b5028c9d873a0fc6eec5ec450aebb8414",
+        "version": "0.3.0"
       },
       "binding": {
         "client": {
@@ -104,7 +104,7 @@
         "id": "hosted-read-only",
         "source": "capability-profile-declaration"
       },
-      "registryEntryDigest": "sha256:3253d72ada3a961597ca1d4a94fd197ed7297415529364ec5a5bfaeb9be39654",
+      "registryEntryDigest": "sha256:2cc9ed0888d74bd6d590c445d7c7c0b83709f07586436097c27415d6aadd7556",
       "requestedVersion": null,
       "requirements": {
         "permissions": [
@@ -128,9 +128,9 @@
       "source": {
         "profileDeclaration": "capability-profiles.json",
         "repository": "https://github.com/ashergarland/agent-tool-server-azure",
-        "revision": "a2ea5bac9162159b4b0b04ce12e80d46a1b9a79c"
+        "revision": "d036a12b5028c9d873a0fc6eec5ec450aebb8414"
       },
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
       "artifact": {
